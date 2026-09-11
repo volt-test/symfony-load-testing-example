@@ -19,8 +19,10 @@ primary_region = "iad"
   SERVER_NAME = ":8080"
   TRUSTED_PROXIES = "127.0.0.1,REMOTE_ADDR,172.16.0.0/16,fdaa::/16"
   FRANKENPHP_CONFIG = "worker ./public/index.php"
-  # php-fpm pool size for the Dockerfile.fpm comparison deploy: 2*cores+1 on a
-  # performance-2x box, matching FrankenPHP's default thread count.
+  # php-fpm pool size for the Dockerfile.fpm comparison deploy. FrankenPHP's worker
+  # count is left at its default (2 workers per CPU + 1 non-worker thread = 5 PHP
+  # threads on a performance-2x box); the pool matches that total, so php-fpm gets
+  # 5 request-serving processes against FrankenPHP's 4 workers.
   PHP_FPM_MAX_CHILDREN = "5"
   # bcrypt cost; must match the stored hashes or every login re-hashes (see security.yaml)
   PASSWORD_HASH_COST = "13"

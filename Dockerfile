@@ -1,6 +1,8 @@
 # syntax=docker/dockerfile:1
 # Production image: FrankenPHP in worker mode, Symfony booted once per worker
-# (runtime/frankenphp-symfony), opcache preload, no dev dependencies.
+# (Symfony 7.4's native FrankenPHP runtime; APP_RUNTIME is not set, so the
+# runtime/frankenphp-symfony package in composer.json is unused), opcache preload,
+# no dev dependencies.
 FROM dunglas/frankenphp:1-php8.4 AS app
 
 WORKDIR /app

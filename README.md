@@ -12,7 +12,7 @@ of every run quoted in the article.
 
 | Piece | Choice | Why it matters under load |
 |---|---|---|
-| Runtime | FrankenPHP **worker mode** (`runtime/frankenphp-symfony`) | Kernel boots once per worker instead of once per request |
+| Runtime | FrankenPHP **worker mode** (native in Symfony 7.4+, no `APP_RUNTIME` bridge needed) | Kernel boots once per worker instead of once per request |
 | PHP | 8.4, `opcache.preload` of the compiled container, `validate_timestamps=0` | Prod opcache settings, nothing is re-parsed |
 | Database | PostgreSQL via Doctrine ORM (16 in the Compose stack, 18 on Fly for the article's runs) | Stock is reserved with a conditional `UPDATE` inside a transaction |
 | Sessions | Redis (`RedisSessionHandler`, Predis) | No file locking; works on more than one machine |
@@ -125,8 +125,10 @@ sold exactly once. That row lock is also where latency climbs under contention.
 ## Runtime comparison: FrankenPHP worker mode vs nginx + php-fpm
 
 `Dockerfile.fpm` builds the same app on nginx + php-fpm (PHP 8.4, same opcache and
-preload settings, `pm.max_children` = 9 to match FrankenPHP's thread count on a 4-core
-box). It runs as the `fpm` compose profile on host port 8089 against the same database
+preload settings, `pm.max_children` = 9 to match FrankenPHP's total PHP thread count at its
+defaults on a 4-core box: 8 worker threads, two per CPU, plus one non-worker thread. On the
+2-vCPU Fly machine used for the published runs the pool was 5 against 4 FrankenPHP workers,
+so php-fpm had one extra request-serving process.) It runs as the `fpm` compose profile on host port 8089 against the same database
 and Redis, so a load test compares runtimes, not setups:
 
 ```bash
