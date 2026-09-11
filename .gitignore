@@ -1,0 +1,27 @@
+###> symfony/framework-bundle ###
+/.env.local
+/.env.local.php
+/.env.*.local
+/config/secrets/prod/prod.decrypt.private.php
+/public/bundles/
+/var/
+/vendor/
+###< symfony/framework-bundle ###
+
+###> lexik/jwt-authentication-bundle ###
+/config/jwt/*.pem
+###< lexik/jwt-authentication-bundle ###
+
+# Load test: dependencies and the downloaded engine binary are installed by
+# Composer; generated CSV shards come from `bin/console app:export-users`.
+# loadtest/results/ is intentionally tracked: it holds the raw JSON of the runs
+# the article quotes.
+/loadtest/vendor/
+/loadtest/data/*.csv
+/loadtest/data/fly/
+/loadtest/data/fly-full/
+
+# Editors and OS
+/.idea/
+/.vscode/
+.DS_Store

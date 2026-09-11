@@ -1,0 +1,10 @@
+# Session-backed CSRF, the way most deployed Symfony apps run it.
+# The recipe default (stateless_token_ids) relies on a Stimulus controller to
+# fill the token client-side; without JS it silently falls back to Origin/Referer
+# checks, which is not what we want to load test.
+framework:
+    csrf_protection: true
+    form:
+        csrf_protection:
+            enabled: true
+            field_attr: []   # drop the data-controller="csrf-protection" hint; there is no JS here

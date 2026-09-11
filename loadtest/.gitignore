@@ -1,0 +1,3 @@
+# Composer-installed SDK and the engine binary it downloads (vendor/bin/volt-test).
+# results/ is tracked on purpose: raw JSON of the runs quoted in the article.
+/vendor/

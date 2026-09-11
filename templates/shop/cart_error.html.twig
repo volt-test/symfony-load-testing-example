@@ -1,0 +1,11 @@
+{% extends 'base.html.twig' %}
+{% block title %}Could not add to cart · Symfony Shop{% endblock %}
+{% block body %}
+<div class="card">
+    <h1>Could not add to cart</h1>
+    <ul class="errors cart-errors">
+        {% for error in errors %}<li>{{ error.message }}</li>{% endfor %}
+    </ul>
+    <p><a href="{{ path('app_products') }}">Back to the catalog</a></p>
+</div>
+{% endblock %}

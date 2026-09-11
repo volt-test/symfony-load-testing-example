@@ -1,0 +1,15 @@
+{
+    "name": "volt-test/symfony-shop-loadtest",
+    "description": "VoltTest load test for the Symfony load-testing example app (companion to the \"Symfony load testing\" article)",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2",
+        "volt-test/php-sdk": "^1.2.2"
+    },
+    "config": {
+        "allow-plugins": {
+            "volt-test/php-sdk": true
+        }
+    }
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Symfony Shop{% endblock %}</title>
+    <style>
+        :root { --ink: #1f2933; --muted: #52606d; --line: #e4e7eb; --brand: #0f766e; --bg: #f9fafb; }
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; color: var(--ink); background: var(--bg); }
+        header { background: #fff; border-bottom: 1px solid var(--line); }
+        header .wrap { display: flex; align-items: center; justify-content: space-between; }
+        .wrap { max-width: 1040px; margin: 0 auto; padding: 1rem 1.25rem; }
+        a { color: var(--brand); text-decoration: none; }
+        nav a { margin-left: 1rem; }
+        h1, h2 { margin: 0 0 .75rem; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 1rem; }
+        .price { font-weight: 600; }
+        .muted { color: var(--muted); }
+        form.inline { display: inline; }
+        input, button { font: inherit; padding: .5rem .75rem; border: 1px solid var(--line); border-radius: 6px; }
+        button { background: var(--brand); color: #fff; border-color: var(--brand); cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; background: #fff; }
+        th, td { text-align: left; padding: .6rem; border-bottom: 1px solid var(--line); }
+        .flash { padding: .75rem 1rem; border-radius: 6px; margin-bottom: 1rem; }
+        .flash-error { background: #fef2f2; color: #991b1b; }
+        .field { margin-bottom: .75rem; }
+        .field label { display: block; margin-bottom: .25rem; }
+        .errors { color: #991b1b; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="wrap">
+        <a href="{{ path('app_home') }}"><strong>Symfony Shop</strong></a>
+        <nav>
+            <a href="{{ path('app_products') }}">Catalog</a>
+            {% if app.user %}
+                <a href="{{ path('app_cart') }}" class="cart-link">Cart</a>
+                <span class="muted user-email">{{ app.user.email }}</span>
+                <form class="inline" method="post" action="{{ path('app_logout') }}">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}">
+                    <button type="submit">Log out</button>
+                </form>
+            {% else %}
+                <a href="{{ path('app_login') }}">Log in</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+<main class="wrap">
+    {% for message in app.flashes('error') %}
+        <div class="flash flash-error">{{ message }}</div>
+    {% endfor %}
+    {% block body %}{% endblock %}
+</main>
+</body>
+</html>

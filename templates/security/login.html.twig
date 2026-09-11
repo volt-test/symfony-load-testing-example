@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+{% block title %}Log in · Symfony Shop{% endblock %}
+{% block body %}
+<div class="card" style="max-width: 420px;">
+    <h1>Log in</h1>
+    {% if error %}
+        <p class="errors login-error">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+    {% endif %}
+    <form method="post" action="{{ path('app_login') }}" class="login-form">
+        <div class="field">
+            <label for="username">Email</label>
+            <input type="email" id="username" name="_username" value="{{ last_username }}" required autofocus>
+        </div>
+        <div class="field">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="_password" required>
+        </div>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+        <button type="submit">Log in</button>
+    </form>
+</div>
+{% endblock %}

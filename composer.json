@@ -1,0 +1,85 @@
+{
+    "name": "volt-test/symfony-load-testing-example",
+    "description": "Production-mode Symfony 7.4 shop used as a load-testing target for VoltTest (FrankenPHP worker mode vs php-fpm, JWT API, CSRF forms, flash-sale oversell guard)",
+    "license": "MIT",
+    "type": "project",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.2",
+        "ext-ctype": "*",
+        "ext-iconv": "*",
+        "doctrine/doctrine-bundle": "^3.3",
+        "doctrine/doctrine-fixtures-bundle": "^4.3",
+        "doctrine/doctrine-migrations-bundle": "^4.0",
+        "doctrine/orm": "^3.6",
+        "lexik/jwt-authentication-bundle": "^3.2",
+        "predis/predis": "^3.6",
+        "runtime/frankenphp-symfony": "^1.0",
+        "symfony/console": "7.4.*",
+        "symfony/dotenv": "7.4.*",
+        "symfony/flex": "^2",
+        "symfony/form": "7.4.*",
+        "symfony/framework-bundle": "7.4.*",
+        "symfony/monolog-bundle": "^4.0",
+        "symfony/runtime": "7.4.*",
+        "symfony/security-bundle": "7.4.*",
+        "symfony/serializer": "7.4.*",
+        "symfony/twig-bundle": "7.4.*",
+        "symfony/validator": "7.4.*",
+        "symfony/yaml": "7.4.*"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "symfony/flex": true,
+            "symfony/runtime": true
+        },
+        "bump-after-update": true,
+        "sort-packages": true
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "App\\Tests\\": "tests/"
+        }
+    },
+    "replace": {
+        "symfony/polyfill-ctype": "*",
+        "symfony/polyfill-iconv": "*",
+        "symfony/polyfill-php72": "*",
+        "symfony/polyfill-php73": "*",
+        "symfony/polyfill-php74": "*",
+        "symfony/polyfill-php80": "*",
+        "symfony/polyfill-php81": "*",
+        "symfony/polyfill-php82": "*"
+    },
+    "scripts": {
+        "auto-scripts": {
+            "cache:clear": "symfony-cmd",
+            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+        },
+        "post-install-cmd": [
+            "@auto-scripts"
+        ],
+        "post-update-cmd": [
+            "@auto-scripts"
+        ]
+    },
+    "conflict": {
+        "symfony/symfony": "*"
+    },
+    "extra": {
+        "symfony": {
+            "allow-contrib": false,
+            "require": "7.4.*"
+        }
+    },
+    "require-dev": {
+        "symfony/maker-bundle": "^1.67"
+    }
+}

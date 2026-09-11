@@ -1,0 +1,22 @@
+framework:
+    secret: '%env(APP_SECRET)%'
+    trusted_proxies: '%env(TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-host', 'x-forwarded-port']
+
+    # Sessions live in Redis (see services.yaml), not on the local filesystem,
+    # so the app can run on more than one machine and file locking never
+    # becomes the bottleneck under load.
+    session:
+        handler_id: Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler
+        cookie_secure: auto
+        cookie_samesite: lax
+        name: SYMFONYSHOP
+
+    php_errors:
+        log: true
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

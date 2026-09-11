@@ -1,0 +1,80 @@
+# Local stack that mirrors production: prod-mode FrankenPHP worker app,
+# PostgreSQL 16 and Redis 7. `docker compose up --build` then hit http://localhost:8088.
+services:
+  app:
+    build: .
+    ports:
+      - "8088:8080"
+    environment:
+      APP_ENV: prod
+      APP_SECRET: ${APP_SECRET:-c7f3d9b1e5a24f0b8d6c1e9a7b3f5d2c}
+      DATABASE_URL: "postgresql://app:app@postgres:5432/app?serverVersion=16&charset=utf8"
+      REDIS_URL: "redis://redis:6379"
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE:-local-dev-passphrase}
+      TRUSTED_PROXIES: "127.0.0.1,REMOTE_ADDR,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      MIGRATE_ON_START: "1"
+      PASSWORD_HASH_COST: ${PASSWORD_HASH_COST:-13}
+    volumes:
+      - jwt_keys:/app/config/jwt
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Same app on nginx + php-fpm for the runtime comparison. Started only with
+  # `docker compose --profile fpm up -d fpm`; listens on :8089 on the host.
+  fpm:
+    build:
+      context: .
+      dockerfile: Dockerfile.fpm
+    profiles: ["fpm"]
+    ports:
+      - "8089:8080"
+    environment:
+      APP_ENV: prod
+      APP_SECRET: ${APP_SECRET:-c7f3d9b1e5a24f0b8d6c1e9a7b3f5d2c}
+      DATABASE_URL: "postgresql://app:app@postgres:5432/app?serverVersion=16&charset=utf8"
+      REDIS_URL: "redis://redis:6379"
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE:-local-dev-passphrase}
+      TRUSTED_PROXIES: "127.0.0.1,REMOTE_ADDR,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+      PHP_FPM_MAX_CHILDREN: "9"
+      PASSWORD_HASH_COST: ${PASSWORD_HASH_COST:-13}
+    volumes:
+      - jwt_keys:/app/config/jwt
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+    ports:
+      - "5433:5432"
+    command: ["postgres", "-c", "max_connections=300"]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pg_data:
+  jwt_keys:

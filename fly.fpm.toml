@@ -1,0 +1,53 @@
+# Same app, nginx + php-fpm image, for the runtime comparison runs. Only the
+# Dockerfile differs from fly.toml. flyctl ignores --dockerfile when the config
+# names one, so build/deploy with `-c fly.fpm.toml`:
+#   fly deploy -c fly.fpm.toml --build-only --push --image-label fpm-v3
+#   fly deploy --image registry.fly.io/symfony-shop-example:fpm-v3 --ha=false
+# Verify with: fly ssh console -C "sh -c 'for p in /proc/[0-9]*; do cat $p/comm; done | sort | uniq -c | grep -E nginx\|php-fpm'"
+
+app = "symfony-shop-example"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile.fpm"
+
+[deploy]
+  release_command = "php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration"
+
+[env]
+  APP_ENV = "prod"
+  SERVER_NAME = ":8080"
+  TRUSTED_PROXIES = "127.0.0.1,REMOTE_ADDR,172.16.0.0/16,fdaa::/16"
+  FRANKENPHP_CONFIG = "worker ./public/index.php"
+  # php-fpm pool size for the Dockerfile.fpm comparison deploy: 2*cores+1 on a
+  # performance-2x box, matching FrankenPHP's default thread count.
+  PHP_FPM_MAX_CHILDREN = "5"
+  # bcrypt cost; must match the stored hashes or every login re-hashes (see security.yaml)
+  PASSWORD_HASH_COST = "13"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  # High enough that Fly's proxy never queues ahead of the app: the point of the
+  # runs is to see the app saturate, not the edge.
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 2000
+    hard_limit = 4000
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "3s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/health"
+
+# Dedicated CPUs so the FrankenPHP vs php-fpm comparison is not skewed by
+# shared-CPU throttling. Scale down (or destroy) between article runs.
+[[vm]]
+  size = "performance-2x"
+  memory = "4gb"

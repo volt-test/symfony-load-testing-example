@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+{% block title %}Your cart · Symfony Shop{% endblock %}
+{% block body %}
+<h1>Your cart</h1>
+{% if cart.isEmpty %}
+    <p class="cart-empty">Your cart is empty. <a href="{{ path('app_products') }}">Browse the catalog</a>.</p>
+{% else %}
+    <table class="cart-table">
+        <thead><tr><th>Product</th><th>Qty</th><th>Unit</th><th>Subtotal</th></tr></thead>
+        <tbody>
+        {% for item in cart.items %}
+            <tr class="cart-item">
+                <td>{{ item.product.name }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.product.formattedPrice }}</td>
+                <td>${{ (item.subtotal / 100)|number_format(2) }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+        <tfoot><tr><th colspan="3">Total</th><th class="cart-total">${{ (cart.total / 100)|number_format(2) }}</th></tr></tfoot>
+    </table>
+    <form method="post" action="{{ path('app_checkout') }}" class="checkout-form" style="margin-top:1rem">
+        <input type="hidden" name="_token" value="{{ csrf_token('checkout') }}">
+        <button type="submit">Checkout</button>
+    </form>
+{% endif %}
+{% endblock %}

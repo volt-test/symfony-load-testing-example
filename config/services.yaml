@@ -1,0 +1,19 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+
+    # Redis client shared by the session handler (and anything else that wants it)
+    Predis\Client:
+        arguments:
+            - '%env(REDIS_URL)%'
+
+    Symfony\Component\HttpFoundation\Session\Storage\Handler\RedisSessionHandler:
+        arguments:
+            - '@Predis\Client'
+            - { prefix: 'sf_sess:', ttl: 7200 }

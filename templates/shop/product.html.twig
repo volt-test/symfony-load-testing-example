@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+{% block title %}{{ product.name }} · Symfony Shop{% endblock %}
+{% block body %}
+<div class="card">
+    <h1 class="product-name">{{ product.name }}</h1>
+    <p class="muted">{{ product.category }}</p>
+    <p class="price"><span class="product-price">{{ product.formattedPrice }}</span></p>
+    <p>{{ product.description }}</p>
+    <p class="muted">{{ product.stock }} in stock</p>
+    {% if app.user %}
+        {{ form_start(form, {attr: {class: 'add-to-cart-form'}}) }}
+            {{ form_widget(form.product_id) }}
+            <div class="field">
+                {{ form_label(form.quantity) }}
+                {{ form_widget(form.quantity) }}
+            </div>
+            <button type="submit">Add to cart</button>
+        {{ form_end(form) }}
+    {% else %}
+        <p><a href="{{ path('app_login') }}">Log in</a> to add this to your cart.</p>
+    {% endif %}
+</div>
+{% endblock %}

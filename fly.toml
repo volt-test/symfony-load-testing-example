@@ -1,0 +1,75 @@
+# Fly.io config for the Symfony load-testing example app.
+#
+# One machine in iad (nearest the us-east-1 VoltTest engines), sized like a
+# small production box. Rename the app (and the db/redis app names below) to
+# your own before deploying.
+#
+# First deploy (replace <app> with your app name):
+#   fly apps create <app>
+#   fly postgres create --name <app>-db --region iad --vm-size shared-cpu-1x --initial-cluster-size 1 --volume-size 1
+#   fly postgres attach <app>-db -a <app>                  # sets the DATABASE_URL secret
+#   fly apps create <app>-redis
+#   fly machine run redis:7-alpine --app <app>-redis --region iad --vm-size shared-cpu-1x \
+#     --vm-memory 256 --name redis --autostop=off -- redis-server --maxmemory 200mb --maxmemory-policy allkeys-lru --save ""
+#   openssl genpkey -algorithm RSA -out private.pem -pkeyopt rsa_keygen_bits:4096 -aes256 -pass pass:<passphrase>
+#   openssl pkey -in private.pem -passin pass:<passphrase> -pubout -out public.pem
+#   fly secrets set -a <app> --stage APP_SECRET="$(openssl rand -hex 32)" JWT_PASSPHRASE=<passphrase> \
+#     JWT_SECRET_KEY="$(cat private.pem)" JWT_PUBLIC_KEY="$(cat public.pem)" REDIS_URL="redis://<app>-redis.internal:6379"
+#   fly deploy --build-only --push --image-label frankenphp-v1  # build on Fly's builder (amd64)
+#   fly deploy --image registry.fly.io/<app>:frankenphp-v1 --ha=false   # release_command runs the migrations
+#   fly ssh console -a <app> -C "php bin/console doctrine:fixtures:load --no-interaction"
+#   fly ssh console -a <app> -C "php bin/console app:flash-sale reset"
+#   fly ssh console -a <app> -C "php bin/console app:export-users /tmp/users.csv"
+#   for f in users-1 users-2 users-3 users-flash-sale; do fly ssh sftp get /tmp/$f.csv loadtest/data/fly/$f.csv -a <app>; done
+#
+# php-fpm variant for the runtime comparison (same app, database and Redis):
+#   fly deploy -c fly.fpm.toml --build-only --push --image-label fpm-v1   # flyctl ignores --dockerfile when the config names one
+#   fly deploy --image registry.fly.io/<app>:fpm-v1 --ha=false
+# JWT keys must come from secrets (not generated in the container) so every machine signs the same way.
+
+app = "symfony-shop-example"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[deploy]
+  release_command = "php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration"
+
+[env]
+  APP_ENV = "prod"
+  SERVER_NAME = ":8080"
+  TRUSTED_PROXIES = "127.0.0.1,REMOTE_ADDR,172.16.0.0/16,fdaa::/16"
+  FRANKENPHP_CONFIG = "worker ./public/index.php"
+  # php-fpm pool size for the Dockerfile.fpm comparison deploy: 2*cores+1 on a
+  # performance-2x box, matching FrankenPHP's default thread count.
+  PHP_FPM_MAX_CHILDREN = "5"
+  # bcrypt cost; must match the stored hashes or every login re-hashes (see security.yaml)
+  PASSWORD_HASH_COST = "13"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "suspend"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  # High enough that Fly's proxy never queues ahead of the app: the point of the
+  # runs is to see the app saturate, not the edge.
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 2000
+    hard_limit = 4000
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "3s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/health"
+
+# Dedicated CPUs so the FrankenPHP vs php-fpm comparison is not skewed by
+# shared-CPU throttling. Scale down (or destroy) between article runs.
+[[vm]]
+  size = "performance-2x"
+  memory = "4gb"

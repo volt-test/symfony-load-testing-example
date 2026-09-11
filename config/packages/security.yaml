@@ -1,0 +1,71 @@
+security:
+    password_hashers:
+        # `auto` currently means bcrypt; the default cost is 13. Whatever cost
+        # is configured here must match what is stored: with cheaper hashes in
+        # the database, Symfony re-hashes at the configured cost on EVERY login
+        # to migrate them, which costs a full cost-13 hash per request.
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+            algorithm: auto
+            cost: '%env(int:PASSWORD_HASH_COST)%'
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+
+        # POST /api/v1/login -> Lexik issues a JWT
+        api_login:
+            pattern: ^/api/v1/login$
+            stateless: true
+            provider: app_user_provider
+            json_login:
+                check_path: api_login
+                username_path: email
+                password_path: password
+                success_handler: lexik_jwt_authentication.handler.authentication_success
+                failure_handler: lexik_jwt_authentication.handler.authentication_failure
+
+        # Everything else under /api is bearer-token only, no session
+        api:
+            pattern: ^/api/
+            stateless: true
+            provider: app_user_provider
+            jwt: ~
+
+        # HTML pages: classic session + form login with CSRF
+        main:
+            lazy: true
+            provider: app_user_provider
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                default_target_path: app_home
+                enable_csrf: true
+                username_parameter: _username
+                password_parameter: _password
+                csrf_parameter: _csrf_token
+            logout:
+                path: app_logout
+                target: app_home
+                enable_csrf: true
+
+    access_control:
+        - { path: ^/api/v1/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/v1/products, roles: PUBLIC_ACCESS }
+        - { path: ^/api/, roles: ROLE_USER }
+        - { path: ^/(cart|checkout|orders), roles: ROLE_USER }
+
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4
+                time_cost: 3
+                memory_cost: 10
